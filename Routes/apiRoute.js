@@ -1,9 +1,14 @@
 const apiRoute = require("express").Router();
 const uuidv1 = require("uuid/v1");
 const fs = require("fs");
+const notesFile = require("./db/db.json");
 
 // apiRoute GET method
-apiRoute.get("/api/notes", (req, res) => {});
+apiRoute.get("/api/notes", (req, res) => {
+  //logging that GET request for all the saved notes was received
+  console.info(`${req.method} request received to get all the notes saved`);
+  res.status(200).json(notesFile);
+});
 
 // apiRoute POST method
 apiRoute.post("/api/notes", (req, res) => {
@@ -18,11 +23,11 @@ apiRoute.post("/api/notes", (req, res) => {
     const newNote = {
       title,
       text,
-      id: uuidv1(),
+      note_id: uuidv1(),
     };
     // converting the data to string so we can save it
     // const noteNoteString = JSON.stringify(newNote)
-    fs.readFile("./db/db.json", "utf8", (err, data) => {
+    fs.readFile(notesFile, "utf8", (err, data) => {
       if (err) {
         console.log(err);
       } else {
@@ -30,7 +35,7 @@ apiRoute.post("/api/notes", (req, res) => {
         parsedNewNote.push(newNote);
 
         fs.writeFile(
-          `./db/db.json`,
+          notesFile,
           JSON.stringify(parsedNewNote, null, 3),
           (err) => {
             err
