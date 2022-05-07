@@ -1,18 +1,23 @@
+//Creating the router
 const apiRoute = require("express").Router();
+
+// Importing the unique identifer module and file syetem
 const uuid = require("uuid");
 const fs = require("fs");
-//const notesFile = require("./db/");
 
 // apiRoute GET method
 apiRoute.get("/notes", (req, res) => {
   //logging that GET request for all the saved notes was received
-  console.info(`${req.method} request received to get all the notes saved`);
+  console.info(`${req.method} request received to get all the saved notes`);
+
+  // Reading the database
   fs.readFile("./db/db.json", "utf8", (err, data) => {
     if (err) {
       console.log(err);
     } else {
       console.log(data);
-      res.status(200).json(data);
+      //sending back response
+      res.status(200).json(JSON.parse(data));
     }
   });
 });
@@ -30,19 +35,24 @@ apiRoute.post("/notes", (req, res) => {
     const newNote = {
       title,
       text,
-      note_id: uuid.v4(),
+      id: uuid.v4(),
     };
-    // converting the data to string so we can save it
-    // const noteNoteString = JSON.stringify(newNote)
+
+    // reading the file in the db
     fs.readFile("./db/db.json", "utf8", (err, data) => {
       if (err) {
         console.log(err);
       } else {
+        // Making the new data a JSON and storing in a variable call pasredNewNote
         const parsedNewNote = JSON.parse(data);
+        // Pushing it the array
         parsedNewNote.push(newNote);
 
+        //writing the new data in out db
         fs.writeFile(
           "./db/db.json",
+
+          //converting the data into a JSON string
           JSON.stringify(parsedNewNote, null, 3),
           (err) => {
             err
@@ -52,50 +62,51 @@ apiRoute.post("/notes", (req, res) => {
         );
       }
     });
-
+    //response to be send back with the status
     const response = {
       status: "success",
       body: newNote,
     };
 
     console.log(response);
+    //sending back the response
     res.status(201).json(response);
   } else {
     res.status(400).json("Error in saving the note");
   }
 });
 
-apiRoute.delete("/notes/:note_id", (req, res) => {
-  const noteID = req.params.note_id;
-  const notes = JSON.parse(data);
+//api DELETE Method
+apiRoute.delete("/notes/:id", (req, res) => {
+  //storing the
+  const noteID = req.params.id;
 
-  const deleteNote = notes.find((note) => note.note_id === noteID);
-  //   const deleteNote =
+  // Rreading the db data
+  fs.readFile("./db/db.json", "utf8", (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      //storing the data
+      let notes = JSON.parse(data);
+      // Finding the notes to be deleted using the id param included
+      notesIndex = notes.findIndex((note) => note.id === noteID);
 
-  if (deleteNote) {
-    notes = notes.filter((note) => note.note_id !== noteID);
-    res.status(200).json(deleteNote);
-  } else {
-    res
-      .status(404)
-      .json({ message: "the note you are trying to deleted doesnt exist" });
-  }
+      if (notesIndex >= 0) {
+        notes.splice(notesIndex, 1);
+        fs.writeFile("./db/db.json", JSON.stringify(notes, null, 3), (err) => {
+          err
+            ? console.log(err)
+            : console.log(`Successfully deleted the new note`);
+        });
+      }
+    }
+  });
 
-  //   fs.readFile("./db/db.json", "utf8", (err, data) => {
-  //     if (err) {
-  //       console.log(err);
-  //     } else {
-  //       let notes = JSON.parse(data);
-  //       notes = notes.filter((note) => note.note_id !== noteID);
-
-  //     }
-  //   });
-
-  //   const response = {
-  //     status: "deleted",
-  //     body: notes,
-  //   };
-  //   res.status(200).json(response);
+  const response = {
+    status: "deleted",
+  };
+  //sending back the response
+  res.status(200).json(response);
 });
 
 module.exports = apiRoute;
